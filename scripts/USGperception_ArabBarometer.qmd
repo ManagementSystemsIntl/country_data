@@ -1,0 +1,27 @@
+---
+title: "Perception of United States in the Arab World"
+author: "Dan Killian"
+toc: true
+toc-depth: 3
+number-sections: true
+format:
+  html:
+    code-fold: true
+editor: visual
+---
+
+```{r global_options, include=F, warning=F, message=F, echo=F, error=F}
+
+# standard figure size and generate clean output
+knitr::opts_chunk$set(autodep=T, fig.height=4, fig.width=6, warning=FALSE, message=FALSE, cache=TRUE, error=T, echo=T)
+getwd()
+library(here)
+source("00 Arab Spring - prep.R")
+library(crosstalk) #Allows objects to "talk" to each other
+library(reactable) #Creates a table that can be interactive
+
+```
+
+```{r results='asis'}
+include_graphics(here("viz/Arab Barometer/Positive perception of American people chick, Arab Barometer W5.png"))
+```

@@ -1,0 +1,469 @@
+---
+title: "Figure customization in R and Stata"
+subtitle: ""  
+author: 
+  - "Dan Killian"
+date: "2021/05/11"
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_mono_light(
+  base_color = "#23395b"
+)
+
+```
+
+```{r include=F}
+library(xaringanExtra)
+library(tidyverse)
+library(here)
+library(readxl)
+library(viridis)
+library(knitr)
+
+use_panelset()
+
+```
+### Session objective
+
+Show finished visualization in R
+
+Narrate construction of visualization step by step (coding out loud)
+
+Compare / contrast against figure construction in Stata
+
+---
+
+### Visualization using a grammar of graphics
+
+The ggplot2 package is based on a specific grammar of graphics. Under this grammar of graphics, a visualization comprises six layers: 
+
+- data
+- mapping (aesthetic)
+- geometry
+- facet
+- statistic
+- theme
+
+---
+
+### Template of a data visualization
+
+All plots require the first three layers:
+
+- data to visualize
+- a mapping of variables from the data to the visualization grid
+  - different types of mappings are referred to as 'aesthetics'
+- a geometry that gives a specific implementation of the specified aesthetic
+
+```{r eval = F}
+ggplot(data = [DATASET],
+       mapping = aes(x = [X VARIABLE],
+                     y = [Y VARIABLE])) +
+  geom_SOMETHING() 
+```
+
+---
+
+.panelset[
+
+.panel[.panel-name[Code]
+
+Client interested in open-source data looking at trends before and after the Arab Spring
+
+Review data from World Bank World Governance Indicators
+
+```{r}
+
+va <- read_excel(here("data/World Governance Indicator/cleaned.xlsx"), sheet = "VoiceandAccountability")
+
+va1 <- va %>%
+  filter(Subindicator_Type == "Estimate") %>%
+  pivot_longer(!Country_Name&!Indicator_Id&!Indicator&!Subindicator_Type, names_to = "Year", values_to = "Estimate") %>%
+  select(1,5,6) %>%
+  filter(Year > 2007,
+         Country_Name == "Egypt"|
+           Country_Name == "Tunisia"|
+           Country_Name == "Libya") %>%
+  mutate(Year=as.numeric(Year)) %>%
+  arrange(Year) %>%
+  as.data.frame()
+
+```
+
+]
+
+.panel[.panel-name[Data]
+
+```{r}
+kable(va1)
+```
+
+Let's plot the World Bank Voice and Accountability index for each country, across years
+
+]
+
+.panel[.panel-name[Finished plot]
+
+```{r}
+include_graphics(here("viz/World Governance Indicator/Voice and Accountability eg tun lib.png"))
+```
+]
+]
+
+---
+
+class: middle
+
+# Coding out loud
+
+- data
+- mapping (aesthetic)
+- geometry
+- facet
+- statistic
+- theme
+
+---
+
+.midi[
+> 1. **Start with the data**
+]
+.pull-left[
+```{r data-0, fig.show = "hide", warning = FALSE}
+ggplot(data = va1) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-0", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> 1. Start with the data,
+> 2. **map year to the x-axis**
+]
+.pull-left[
+```{r data-1, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year)) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-1", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> 1. Start with the data,
+> 2. map year to the x-axis
+> 3. **map Voice and Accountability Index to y-axis**
+]
+.pull-left[
+```{r data-2, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate)) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-2", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> 1. Start with the data,
+> 2. map year to the x-axis
+> 3. map Voice and Accountability Index to y-axis
+> 4. **map Country to the color aesthetic**
+]
+.pull-left[
+```{r data-3, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate, color=Country_Name)) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-3", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> 1. Start with the data,
+> 2. map year to the x-axis
+> 3. map Voice and Accountability Index to y-axis
+> 4. map Country to the color aesthetic
+> 5. **assign a point geometry to display the data mapping**
+]
+.pull-left[
+```{r data-4, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate, color=Country_Name)) + 
+       geom_point(size=3) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-4", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> Start with the data,
+> map year to the x-axis
+> map Voice and Accountability Index to y-axis
+> assign a point geometry to display the data mapping
+> **assign a line geometry to display the data mapping**
+]
+.pull-left[
+```{r data-5, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate, group=Country_Name)) + 
+       geom_point(size=3) +
+       geom_line(size=1) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-5", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> Start with the data,
+> map year to the x-axis
+> map Voice and Accountability Index to y-axis
+> assign a point geometry to display the data mapping
+> assign a line geometry to display the data mapping
+> **assign a color blind-friendly palette**
+]
+.pull-left[
+```{r data-6, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate)) + 
+       geom_point(size=3) +
+       geom_line(size=1) +
+       scale_color_viridis_d() #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-6", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+
+---
+
+.midi[
+> Start with the data,
+> map year to the x-axis
+> map Voice and Accountability Index to y-axis
+> assign a point geometry to display the data mapping
+> assign a line geometry to display the data mapping
+> assign a color blind-friendly palette
+> **highlight a break in the timeline with a vertical line**
+]
+.pull-left[
+```{r data-7, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate)) + 
+       geom_point(size=3) +
+       geom_line(size=1) +
+       scale_color_viridis_d() +
+       geom_vline(xintercept=2010, size=1.2, color="darkgrey",alpha=.99) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-7", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+
+---
+
+.midi[
+> Start with the data,
+> map year to the x-axis
+> map Voice and Accountability Index to y-axis
+> assign a point geometry to display the data mapping
+> assign a line geometry to display the data mapping
+> assign a color blind-friendly palette
+> highlight a break in the timeline with a vertical line
+> **format the x-axis**
+]
+.pull-left[
+```{r data-8, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate)) + 
+       geom_point(size=3) +
+       geom_line(size=1) +
+       scale_color_viridis_d() +
+       geom_vline(xintercept=2010, size=1.2, color="darkgrey",alpha=.99) +
+       scale_x_continuous(limits=c(2008,2019),
+                     breaks=seq(2008,2018,2),
+                     labels=c("2008", "Arab\nSpring", "2012", "2014", "2016", "2018")) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-8", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> Start with the data,
+> map year to the x-axis
+> map Voice and Accountability Index to y-axis
+> assign a point geometry to display the data mapping
+> assign a line geometry to display the data mapping
+> assign a color blind-friendly palette
+> highlight a break in the timeline with a vertical line
+> format the x-axis
+> **format the y-axis**
+]
+.pull-left[
+```{r data-9, fig.show = "hide", warning = FALSE}
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate, color=Country_Name)) + 
+       geom_point(size=3) +
+       geom_line(size=1) +
+       scale_color_viridis_d() +
+       geom_vline(xintercept=2010, size=1.2, color="darkgrey",alpha=.99) +
+       scale_x_continuous(limits=c(2008,2019),
+                     breaks=seq(2008,2018,2),
+                     labels=c("2008", "Arab\nSpring", "2012", "2014", "2016", "2018")) +
+       scale_y_continuous(limits=c(-2.0,0.5),
+                     breaks=seq(-2.0,1,0.5)) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-9", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> Start with the data,
+> map year to the x-axis
+> map Voice and Accountability Index to y-axis
+> assign a point geometry to display the data mapping
+> assign a line geometry to display the data mapping
+> assign a color blind-friendly palette
+> highlight a break in the timeline with a vertical line
+> format the x-axis
+> format the y-axis
+> **add end-point labels**
+]
+.pull-left[
+```{r data-10, fig.show = "hide", warning = FALSE}
+va_name <- va1 %>%
+  group_by(Country_Name) %>%
+  summarise(value1 = last(Estimate),
+            value2 = nth(Estimate,11)) %>%
+  mutate(value3 = c(-1.25, -1.55, .281),
+         color=viridis(3))
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate, color=Country_Name, group=Country_Name)) + 
+       geom_point(size=3) +
+       geom_line(size=1) +
+       scale_color_viridis_d() +
+       geom_vline(xintercept=2010, size=1.2, color="darkgrey",alpha=.99) +
+       scale_x_continuous(limits=c(2008,2019),
+                     breaks=seq(2008,2018,2),
+                     labels=c("2008", "Arab\nSpring", "2012", "2014", "2016", "2018")) +
+       scale_y_continuous(limits=c(-2.0,0.5),
+                     breaks=seq(-2.0,1,0.5),
+                     sec.axis=sec_axis(~.,
+                     breaks=va_name$value3,
+                     labels=va_name$Country_Name)) #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-10", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
+
+---
+
+.midi[
+> Start with the data,
+> map year to the x-axis
+> map Voice and Accountability Index to y-axis
+> assign a point geometry to display the data mapping
+> assign a line geometry to display the data mapping
+> assign a color blind-friendly palette
+> highlight a break in the timeline with a vertical line
+> format the x-axis
+> format the y-axis
+> add end-point labels
+> **apply a thematic style**
+]
+.pull-left[
+```{r data-11, fig.show = "hide", warning = FALSE}
+base <- theme_bw() + theme(panel.grid.minor.x=element_blank(),
+                           panel.grid.minor.y=element_blank(),
+                           plot.title=element_text(face="bold",size=18, hjust=.5, family = "Source Sans Pro"),
+                           plot.subtitle = element_text(size=16, family="Source Sans Pro"),
+                           plot.caption=element_text(size=12, family="Source Sans Pro"),
+                           axis.title=element_text(size=16, family="Source Sans Pro"),
+                           axis.text=element_text(size=14, family="Source Sans Pro"),
+                           legend.text=element_text(size=14, family="Source Sans Pro"),
+                           strip.text=element_text(size=14, family="Source Sans Pro"),
+                           panel.border=element_blank(),
+                           axis.ticks = element_blank())
+ggplot(data = va1,
+       mapping = aes(x = Year, y = Estimate, color=Country_Name, group=Country_Name)) + 
+       geom_point(size=3) +
+       geom_line(size=1) +
+       scale_color_viridis_d() +
+       geom_vline(xintercept=2010, size=1.2, color="darkgrey",alpha=.99) +
+       scale_x_continuous(limits=c(2008,2019),
+                     breaks=seq(2008,2018,2),
+                     labels=c("2008", "Arab\nSpring", "2012", "2014", "2016", "2018")) +
+       scale_y_continuous(limits=c(-2.0,0.5),
+                     breaks=seq(-2.0,1,0.5),
+                     sec.axis=sec_axis(~.,
+                     breaks=va_name$value3,
+                     labels=va_name$Country_Name)) +
+                     base #<<
+```
+]
+.pull-right[
+```{r ref.label = "data-11", echo = FALSE, warning = FALSE, out.width = "100%", fig.width = 8}
+```
+]
